@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mensola Pannelli — Designer parametrico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f2ea; --panel:#fffdf8; --ink:#28231a; --ink2:#6b6252;
+  --line:#e3dcc9; --accent:#b4520a; --accent2:#8c3f06; --ok:#2e7d43;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:"Space Grotesk",system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex}
+#panel{width:340px;min-width:340px;height:100dvh;overflow-y:auto;background:var(--panel);
+  border-right:1px solid var(--line);padding:18px 16px 40px;display:flex;flex-direction:column;gap:14px}
+#view{flex:1;position:relative}
+canvas{display:block}
+h1{font-size:19px;margin:0;letter-spacing:-.02em}
+.sub{font-size:12px;color:var(--ink2);margin:2px 0 0}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink2);margin:0 0 8px}
+section.card{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.types{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.types button{font:inherit;font-size:12.5px;padding:9px 6px;border:1px solid var(--line);border-radius:9px;
+  background:#fff;cursor:pointer;transition:all .15s}
+.types button:hover{border-color:var(--accent)}
+.types button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.param{margin-bottom:10px}
+.param .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+.param label{font-size:12.5px}
+.param .val{font-family:var(--mono);font-size:12px;color:var(--accent2);font-weight:600}
+.param input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.param small{display:block;font-size:10.5px;color:var(--ink2)}
+.param.hide{display:none}
+details.guide{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+details.guide summary{cursor:pointer;font-weight:600;font-size:13px}
+details.guide p, details.guide li{font-size:12px;line-height:1.55;color:var(--ink)}
+details.guide ol{padding-left:18px;margin:6px 0}
+.btnrow{display:flex;gap:8px}
+button.big{flex:1;font:inherit;font-weight:700;font-size:14px;padding:12px;border:0;border-radius:11px;
+  background:var(--accent);color:#fff;cursor:pointer;transition:background .15s}
+button.big:hover{background:var(--accent2)}
+button.ghost{flex:1;font:inherit;font-size:12.5px;padding:10px;border:1px solid var(--line);border-radius:11px;
+  background:#fff;cursor:pointer}
+button.ghost:hover{border-color:var(--accent)}
+#dims{display:flex;gap:14px;justify-content:center;font-family:var(--mono);font-size:11.5px;
+  color:var(--ink2);padding:8px;border:1px dashed var(--line);border-radius:9px;flex-wrap:wrap}
+#dims b{color:var(--ink)}
+.presets label{font-size:11px;color:var(--ink2)}
+.presets .save-row{display:flex;gap:6px;margin:6px 0 8px}
+.presets input[type=text]{flex:1;font:inherit;font-size:12.5px;padding:8px;border:1px solid var(--line);
+  border-radius:8px;min-width:0}
+.presets .save-row button{font:inherit;font-size:12px;padding:8px 12px;border:0;border-radius:8px;
+  background:var(--ink);color:#fff;cursor:pointer}
+.plist{display:flex;flex-direction:column;gap:5px}
+.pitem{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff}
+.pitem .nm{flex:1;font-size:12.5px;cursor:pointer}
+.pitem .nm:hover{color:var(--accent)}
+.pitem button{border:0;background:none;cursor:pointer;font-size:13px;color:var(--ink2);padding:2px 6px}
+.pitem button:hover{color:#b00}
+.pempty{font-size:11.5px;color:var(--ink2);font-style:italic}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);
+  color:#fff;font-size:13px;padding:10px 18px;border-radius:10px;opacity:0;pointer-events:none;
+  transition:all .25s;z-index:50}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#hud{position:absolute;right:10px;top:8px;font:11px var(--mono);color:#8a8171;pointer-events:none}
+.check{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;margin-top:4px}
+.check input{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+@media (max-width:760px){ #panel{width:300px;min-width:300px} }
+</style>
+  <script type="module" crossorigin src="./assets/index-xP-yFCBo.js"></script>
+</head>
+<body>
+
+<div id="panel">
+  <header>
+    <h1>Mensola Pannelli</h1>
+    <p class="sub">Designer parametrico per accessori da pannelli acustici a doghe · misure in mm</p>
+  </header>
+
+  <section class="card">
+    <h2>Tipo di pezzo</h2>
+    <div class="types" id="types"></div>
+  </section>
+
+  <section class="card" id="sec-insert">
+    <h2>Pannello e innesto</h2>
+    <div id="params-insert"></div>
+  </section>
+
+  <section class="card" id="sec-body">
+    <h2>Corpo del pezzo</h2>
+    <div id="params-body"></div>
+    <label class="check" id="wrap-bordo">
+      <input type="checkbox" id="bordo_sopra" checked>
+      Bordino verso l'alto (se montato resta in giù, togli la spunta)
+    </label>
+  </section>
+
+  <section class="card presets">
+    <h2>Preset (es. «Sala», «Camera»)</h2>
+    <div class="save-row">
+      <input type="text" id="pname" placeholder="Nome del preset…" maxlength="30">
+      <button id="psave">Salva</button>
+    </div>
+    <div class="plist" id="plist"><span class="pempty">Nessun preset salvato</span></div>
+    <div class="btnrow" style="margin-top:8px">
+      <button class="ghost" id="pexport">Esporta preset (JSON)</button>
+      <button class="ghost" id="pimport">Importa</button>
+      <input type="file" id="pfile" accept=".json" hidden>
+    </div>
+  </section>
+
+  <details class="guide">
+    <summary>📐 Come misurare il pannello</summary>
+    <ol>
+      <li><b>Fessura tra le doghe</b> → <span style="font-family:var(--mono)">spessore_innesto</span> =
+          fessura meno 0,5–1 mm.</li>
+      <li><b>Profondità della doga</b> (dalla faccia anteriore al fondo) →
+          <span style="font-family:var(--mono)">profondita_doga</span>.</li>
+      <li>Con un pannello nuovo, stampa prima <b>solo_innesto</b>: pochi grammi per provare l'incastro.</li>
+      <li>Se entra duro, riduci <span style="font-family:var(--mono)">spessore_innesto</span> di 0,3 mm alla volta.</li>
+    </ol>
+    <p><b>Montaggio:</b> pezzo in verticale, testa a T nella fessura, spingi in fondo e ruota di 90°
+       finché la mensola è orizzontale. Se il bordino resta rivolto in giù, togli la spunta
+       «Bordino verso l'alto» e ristampa.</p>
+  </details>
+
+  <div id="dims"></div>
+
+  <div class="btnrow">
+    <button class="big" id="export">Scarica STL</button>
+    <button class="ghost" id="reset" title="Ripristina i valori di default">Default</button>
+  </div>
+</div>
+
+<div id="view"><div id="hud"></div></div>
+<div id="toast"></div>
+
+</body>
+</html>
